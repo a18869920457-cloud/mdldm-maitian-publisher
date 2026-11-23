@@ -2,16 +2,18 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { validate, PLATFORMS, len } from '../lib/bundle.js';
+import { toPosixRel, hasRel } from '../lib/localpath.js';
 
 const dir = process.argv[2];
 if (!dir) { console.error('用法：node tools/validate.mjs <工程目录>'); process.exit(2); }
 const b = JSON.parse(readFileSync(join(dir, 'publish.json'), 'utf8'));
 const files = new Set();
-const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.add(relative(dir, p)); });
+// publish.json 的相对路径用 /。Windows 的 path.relative 会给出 \，先转成 / 再对。
+const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.add(toPosixRel(relative(dir, p))); });
 walk(dir);
 const { errors, warnings } = validate(b, files);
 // 成片的 moov 必须在文件头（faststart），否则小红书报「无视频流信息」、抖音不出表单（2026-11-12 第 37 期）
-if (b.video && files.has(b.video)) {
+if (b.video && hasRel(files, b.video)) {
   try {
     const { openSync, readSync, closeSync } = await import('node:fs');
     const fd = openSync(join(dir, b.video), 'r'); const buf = Buffer.alloc(1 << 16); readSync(fd, buf, 0, buf.length, 0); closeSync(fd);

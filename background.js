@@ -1,5 +1,6 @@
 // 扩展后台：点击工具栏图标打开侧边栏；视频分发的填写流程也跑在这里，关掉面板不受影响。
 import { run, preflight, collectLinks } from './lib/publish.js';
+import { normalizeRoot } from './lib/localpath.js';
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
 
@@ -64,11 +65,13 @@ chrome.notifications.onClicked.addListener(async () => {
 });
 
 async function start({ project, rootPath, platforms, windowId }) {
+  const root = normalizeRoot(rootPath || '');
+  if (!root.ok) throw new Error(root.message);
   if (job && job.running) throw new Error('上一轮还在跑，先停止或等它结束');
   job = { name: project.data.name, running: true, stop: false, states: {}, startedAt: Date.now() };
   publishState();
   run(project, {
-    rootPath, platforms, windowId,
+    rootPath: root.path, platforms, windowId,
     onChange: (st) => { job.states[st.id] = st; publishState(); },
     shouldStop: () => job.stop,
   }).catch((e) => {

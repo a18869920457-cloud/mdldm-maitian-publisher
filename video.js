@@ -2,6 +2,7 @@
 import { idbGet, idbSet } from './lib/vault.js';
 import { scanProjects, check, ORDER } from './lib/publish.js';
 import { PLATFORMS } from './lib/bundle.js';
+import { normalizeRoot } from './lib/localpath.js';
 import * as ai from './lib/aicopy.js';
 
 const $ = (id) => document.getElementById(id);
@@ -252,13 +253,14 @@ async function publish() {
   if (!current || running) return;
   const platforms = [...$('platList').querySelectorAll('input:checked')].map(i => i.value);
   if (!platforms.length) return;
-  const rootPath = $('nasPath').value.trim();
-  if (!rootPath.startsWith('/')) { alert('请先填 NAS 目录在本机的绝对路径'); return; }
-  try { localStorage.setItem(PATH_KEY, rootPath); } catch { /* 无痕模式 */ }
+  const norm = normalizeRoot($('nasPath').value);
+  if (!norm.ok) { alert(norm.message); return; }
+  $('nasPath').value = norm.path;
+  try { localStorage.setItem(PATH_KEY, norm.path); } catch { /* 无痕模式 */ }
   const win = await chrome.windows.getCurrent();
   // 文件夹句柄不能跨进程传，只传相对路径和 publish.json 内容；流程在插件后台跑
   const r = await chrome.runtime.sendMessage({
-    type: 'publish:start', rootPath, platforms, windowId: win.id,
+    type: 'publish:start', rootPath: norm.path, platforms, windowId: win.id,
     project: { dir: current.project.dir, data: current.project.data },
   });
   if (!r || !r.ok) alert(`没能开始：${r ? r.error : '插件后台没有响应'}`);
@@ -268,7 +270,8 @@ async function publish() {
 export async function initVideo() {
   let path = DEFAULT_PATH;
   try { path = localStorage.getItem(PATH_KEY) || DEFAULT_PATH; } catch { /* 无痕模式 */ }
-  $('nasPath').value = path;
+  const saved = normalizeRoot(path);
+  $('nasPath').value = saved.ok ? saved.path : path;
 
   $('btnNasPick').onclick = async () => {
     try {
