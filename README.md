@@ -1,6 +1,6 @@
 > **👉 请从 [Chrome 应用商店安装麦田发布助手](https://chromewebstore.google.com/detail/eaaipbilkhibicihiollecmbpneikpnj)**，自动更新，不用下载代码、不用开开发者模式；配合 [麦田](https://github.com/CzzzzzzJ/mdldm-maitian) 使用时，安装向导会带你装。本仓库是源码，供开发参考。
 >
-> 本仓库停在 0.5.1（MIT，继续可用）。商店版免费、持续更新；之后新版本的源码在会员仓库更新。
+> 本仓库停在 0.5.2（MIT，继续可用）。商店版免费、持续更新；之后新版本的源码在会员仓库更新。
 
 <div align="center">
 
@@ -98,7 +98,7 @@
 
    `publish.json` 的格式见 [docs/multi-platform-design.md](docs/multi-platform-design.md)。也可以从发布素材 md 直接生成：`node tools/make-publish.mjs <发布素材.md> <工程目录>`（会顺带校验）
 2. 先在 Chrome 里登录好各个平台的创作者后台
-3. 打开插件面板，切到「视频分发」，点「选择」选中「视频导出」文件夹，并填好它在本机的绝对路径
+3. 打开插件面板，切到「视频分发」，点「选择」选中「视频导出」文件夹，并填好它在本机的绝对路径。Windows 填资源管理器里的路径，例如 `F:\新媒体\视频\待发布`，网络盘也可以填 `\\NAS\共享\视频`；Mac 仍填 `/Users/你/Movies/视频导出`。从资源管理器「复制为路径」带上的引号可以留着，插件会去掉
 4. 点一期工程，看校验结果，勾选要发的平台，点「一键填写所选平台」
 5. 插件在后台依次打开各平台上传页并填写，你可以关掉面板去做别的。工具栏图标会显示进度，结束时弹通知
 6. 全部变成「待你发布」后，逐个标签页检查、补上必填的声明项，自己点发布（设了定时就点「定时发布」）
@@ -184,6 +184,7 @@ X 长文编辑器基于 Draft.js。插件用 `chrome.scripting.executeScript({ w
 
 - `sidepanel.*`：面板界面；`video.js`：视频分发页签
 - `lib/publish.js`：扫描工程、按平台调度、等上传完成
+- `lib/localpath.js`：本机绝对路径（Mac、Windows 盘符、UNC；测试：`node tests/localpath.test.mjs`）
 - `lib/bundle.js`：`publish.json` 校验规则（`tools/validate.mjs` 是命令行版）
 - `lib/platforms/*.js`：B 站、小红书、抖音、视频号、YouTube、X、Instagram 的适配器
 - `lib/cdp.js`：Chrome 调试接口驱动

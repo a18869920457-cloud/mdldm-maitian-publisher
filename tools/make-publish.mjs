@@ -16,6 +16,7 @@ import { join, relative, basename, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../lib/bundle.js';
+import { toPosixRel } from '../lib/localpath.js';
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
@@ -61,7 +62,8 @@ if (schedule && !/T/.test(schedule)) schedule = schedule.trim().replace(' ', 'T'
 
 // 工程目录里的文件
 const files = [];
-const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.push(relative(dir, p)); });
+// 封面路径在 publish.json 里固定写成 封面/cover-*.png。Windows 的 path.relative 用 \，这里转成 /。
+const walk = (d) => readdirSync(d).forEach(n => { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.push(toPosixRel(relative(dir, p))); });
 walk(dir);
 const video = files.includes('成片.mp4') ? '成片.mp4' : null;
 const covers = {};
